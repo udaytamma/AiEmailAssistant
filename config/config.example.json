@@ -1,0 +1,25 @@
+{
+  "max_emails_to_fetch": 30,
+  "cache_expiry_hours": 24,
+  "categories": [
+    "Need-Action",
+    "FYI",
+    "SPAM",
+    "Newsletter",
+    "Other"
+  ],
+  "gemini_model": "gemini-2.0-flash-exp",
+  "web_server": {
+    "host": "0.0.0.0",
+    "port": 8001,
+    "debug": true
+  },
+  "automation": {
+    "enabled": false,
+    "require_confirmation": true
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/email_assistant.log"
+  }
+}

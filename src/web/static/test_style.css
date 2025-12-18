@@ -1,0 +1,349 @@
+/* Test Results Page Styling */
+
+/* Use same base styles as main digest */
+@import url('style.css');
+
+/* Test Suite Section */
+.test-suite-section {
+    margin-bottom: 3rem;
+}
+
+.test-suite-section h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+}
+
+.suite-description {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Suite Buttons Grid */
+.suite-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.suite-card {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.suite-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.suite-icon {
+    font-size: 3rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.suite-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.suite-info {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.suite-details {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.suite-details li {
+    padding: 0.25rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.suite-details li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--color-success);
+    font-weight: 700;
+}
+
+.suite-card .btn {
+    width: 100%;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+/* Results Section */
+.results-section {
+    margin-top: 2rem;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.results-header h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.results-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.results-suite {
+    font-weight: 700;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    font-size: 0.875rem;
+}
+
+.results-timestamp {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.summary-card:hover {
+    transform: scale(1.05);
+}
+
+.summary-card .card-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.summary-card .card-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.summary-card .card-label {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.card-passed {
+    border-color: var(--color-success);
+}
+
+.card-passed .card-value {
+    color: var(--color-success);
+}
+
+.card-failed {
+    border-color: var(--color-error);
+}
+
+.card-failed .card-value {
+    color: var(--color-error);
+}
+
+.card-total {
+    border-color: var(--color-primary);
+}
+
+.card-total .card-value {
+    color: var(--color-primary);
+}
+
+.card-duration {
+    border-color: var(--color-info);
+}
+
+.card-duration .card-value {
+    color: var(--color-info);
+}
+
+/* Status Banner */
+.status-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.status-banner.success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 2px solid var(--color-success);
+    color: var(--color-success);
+}
+
+.status-banner.failure {
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid var(--color-error);
+    color: var(--color-error);
+}
+
+.status-icon {
+    font-size: 2rem;
+}
+
+/* Output Section */
+.output-section {
+    margin-top: 2rem;
+}
+
+.output-section h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 1rem;
+}
+
+.test-output {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.loading-subtext {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+}
+
+/* Button Variants */
+.btn-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .suite-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .results-meta {
+        align-items: flex-start;
+    }
+}

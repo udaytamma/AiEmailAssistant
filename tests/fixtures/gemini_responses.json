@@ -1,0 +1,53 @@
+{
+  "categorization_success": {
+    "category": "FYI",
+    "subcategory": "General",
+    "summary": "Test email summary",
+    "action_item": "None",
+    "date_due": null
+  },
+  "categorization_need_action": {
+    "category": "Need-Action",
+    "subcategory": "Bill-Due",
+    "summary": "Invoice payment due for subscription service",
+    "action_item": "AddToCalendar",
+    "date_due": "2025-01-20"
+  },
+  "categorization_newsletter": {
+    "category": "Newsletter",
+    "subcategory": "General",
+    "summary": "Weekly newsletter with industry updates",
+    "action_item": "None",
+    "date_due": null
+  },
+  "categorization_marketing": {
+    "category": "Marketing",
+    "subcategory": "General",
+    "summary": "Promotional offer for discounted products",
+    "action_item": "Unsubscribe",
+    "date_due": null
+  },
+  "categorization_spam": {
+    "category": "SPAM",
+    "subcategory": "General",
+    "summary": "Suspicious phishing attempt",
+    "action_item": "Delete",
+    "date_due": null
+  },
+  "newsletter_summary_success": {
+    "bullet1": "First key point from newsletter",
+    "bullet2": "Second important insight",
+    "bullet3": "Third actionable takeaway"
+  },
+  "category_summary_success": {
+    "summary_points": [
+      "Action item 1: Complete invoice payment by Jan 20",
+      "Action item 2: Review service agreement changes",
+      "Action item 3: Schedule meeting with team"
+    ]
+  },
+  "error_invalid_json": "This is not valid JSON, it will cause parsing error",
+  "error_missing_fields": {
+    "category": "FYI"
+  }
+}

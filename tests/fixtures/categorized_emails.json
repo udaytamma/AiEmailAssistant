@@ -1,0 +1,122 @@
+[
+  {
+    "id": "19b2ebf2957779fe",
+    "from": "Netflix <info@members.netflix.com>",
+    "subject": "New live event. Jake Paul vs. Anthony Joshua",
+    "date": "Wed, 17 Dec 2025 23:57:18 +0000",
+    "snippet": "Coming December 19 at 7:00 PM CST",
+    "category": "Marketing",
+    "subcategory": "General",
+    "summary": "Netflix is announcing a new live event: Jake Paul vs. Anthony Joshua on December 19 at 7:00 PM CST.",
+    "action_item": "None",
+    "date_due": null
+  },
+  {
+    "id": "19b2e936c86f8c9a",
+    "from": "Bloomberg <noreply@news.bloomberg.com>",
+    "subject": "Fear of bubbles",
+    "date": "Wed, 17 Dec 2025 23:09:29 +0000",
+    "snippet": "Bloomberg Evening Briefing Americas View in browser Bloomberg Stocks took a turn for the worse Wednesday as doubts in tech darlings and artificial intelligence outlays manifested in declines across the",
+    "category": "Newsletter",
+    "subcategory": "General",
+    "summary": "Bloomberg Evening Briefing discusses declines in tech stocks due to concerns about artificial intelligence outlays.",
+    "action_item": "None",
+    "date_due": null
+  },
+  {
+    "id": "19b2e9161986eb50",
+    "from": "Every <hello@every.to>",
+    "subject": "Unlock the full Every ecosystem with CEO Dan Shipper",
+    "date": "Wed, 17 Dec 2025 23:06:47 +0000 (UTC)",
+    "snippet": "You're invited to a live kickoff session for Every subscribers. On Tuesday, December 23, join cofounder and CEO Dan Shipper and COO Brandon Gell live on Zoom as they show you how to",
+    "category": "Marketing",
+    "subcategory": "General",
+    "summary": "Invitation to a live kickoff session with Every CEO Dan Shipper on Tuesday, December 23rd.",
+    "action_item": "AddToCalendar",
+    "date_due": "2024-12-23"
+  },
+  {
+    "id": "19b2e8ef010e3423",
+    "from": "Karen Forkey via LinkedIn <messaging-digest-noreply@linkedin.com>",
+    "subject": "Karen just messaged you",
+    "date": "Wed, 17 Dec 2025 23:04:34 +0000 (UTC)",
+    "snippet": "1 new message awaits your response",
+    "category": "FYI",
+    "subcategory": "General",
+    "summary": "Karen Forkey sent you a new message on LinkedIn.",
+    "action_item": "None",
+    "date_due": null
+  },
+  {
+    "id": "19b2e722e2f778b6",
+    "from": "ImpactLife <bloodcenterimpact@mail311.connectingdonors.net>",
+    "subject": "Blood donation appointment confirmation.",
+    "date": "Wed, 17 Dec 2025 22:33:06 +0000",
+    "snippet": "ImpactLife logo only_email header.png (37 KB) Uday, your appointment has been confirmed! Thank you for setting aside time to help save lives with an upcoming blood donation! Please find your",
+    "category": "FYI",
+    "subcategory": "General",
+    "summary": "Your blood donation appointment has been confirmed.",
+    "action_item": "AddToCalendar",
+    "date_due": null
+  },
+  {
+    "id": "19b2e716830afa23",
+    "from": "Last Week in AI <lastweekinai+podcast@substack.com>",
+    "subject": "LWiAI Podcast #228 - GPT 5.2, Scaling Agents, Weird Generalization",
+    "date": "Wed, 17 Dec 2025 22:31:17 +0000",
+    "snippet": "Listen now (87 mins) | GPT-5.2 is OpenAI's latest move in the agentic AI battle, Towards a Science of Scaling Agent Systems, and more!",
+    "category": "Newsletter",
+    "subcategory": "General",
+    "summary": "This is a newsletter about the latest AI news, including GPT-5.2, scaling agents, and weird generalization, and is 87 minutes long.",
+    "action_item": "None",
+    "date_due": null
+  },
+  {
+    "id": "19b2e4b66d5c8f13",
+    "from": "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+    "subject": "Senior Technical Program Manager: Walmart - Principal, Technical Program Manager and more",
+    "date": "Wed, 17 Dec 2025 21:50:49 +0000 (UTC)",
+    "snippet": "$143K-$286K / year salary",
+    "category": "FYI",
+    "subcategory": "JobAlert",
+    "summary": "LinkedIn job alert for 'Senior Technical Program Manager' positions at Walmart with a salary range of $143K-$286K per year.",
+    "action_item": "None",
+    "date_due": null
+  },
+  {
+    "id": "19b2ddddd7dc68a2",
+    "from": "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+    "subject": "product manager: Carefeed - Senior Product Manager, Core Products and more",
+    "date": "Wed, 17 Dec 2025 19:51:11 +0000 (UTC)",
+    "snippet": "Carefeed Senior Product Manager, Core Products: About Us: Carefeed is the platform senior living",
+    "category": "FYI",
+    "subcategory": "JobAlert",
+    "summary": "LinkedIn job alert for Senior Product Manager at Carefeed.",
+    "action_item": "None",
+    "date_due": null
+  },
+  {
+    "id": "19b2dc0dc7e9e1af",
+    "from": "Wilson, Steven D <sdwilson@illinois.edu>",
+    "subject": "holiday lights",
+    "date": "Wed, 17 Dec 2025 19:19:26 +0000",
+    "snippet": "Please send Brianne and I your top three homes (addresses) for the holiday lights contest. If you did not do this Saturday or Monday, please do so tonight. Thanks Steve Wilson Groundwater Hydrologist",
+    "category": "Need-Action",
+    "subcategory": "General",
+    "summary": "Steven Wilson requests your top three homes for the holiday lights contest and asks you to visit homes to see the lights if you haven't already.",
+    "action_item": "None",
+    "date_due": null
+  },
+  {
+    "id": "19b2db30e66cdeea",
+    "from": "Google AI Studio <googleaistudio-noreply@google.com>",
+    "subject": "Try Gemini 3 Flash: Frontier-level intelligence with faster results",
+    "date": "Wed, 17 Dec 2025 11:04:27 -0800",
+    "snippet": "Build and plan anything faster, at scale",
+    "category": "Marketing",
+    "subcategory": "General",
+    "summary": "Google AI Studio is promoting Gemini 3 Flash, highlighting its frontier-level intelligence and faster results for building and planning at scale.",
+    "action_item": "None",
+    "date_due": null
+  }
+]

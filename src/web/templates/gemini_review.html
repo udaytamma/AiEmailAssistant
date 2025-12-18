@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Review - Email Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        td {
+            padding: 15px;
+            vertical-align: top;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .category-need-action {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .category-fyi {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .category-spam {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .category-newsletter {
+            background: #f39c12;
+            color: white;
+        }
+
+        .category-other {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .status-yes {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .status-no {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .status-waiting {
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        .sender {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .subject {
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        .subcategory {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .action-suggested {
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #95a5a6;
+        }
+
+        .empty-state h2 {
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 2px solid #fcc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 30px;
+            color: #c33;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .page-info {
+            font-weight: 600;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Gemini Email Review</h1>
+            <p>Fresh categorization and automation analysis</p>
+        </div>
+
+        <div class="controls">
+            <div class="stats" id="stats">
+                <div class="stat-item">
+                    <strong>Total Emails:</strong> <span id="total-count">-</span>
+                </div>
+                <div class="stat-item">
+                    <strong>Last Updated:</strong> <span id="last-updated">-</span>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+                <a href="/" class="btn btn-secondary">← Back to Digest</a>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Processing emails with Gemini AI...</p>
+            <p style="font-size: 0.9em; color: #999; margin-top: 10px;">This may take 15-30 seconds</p>
+        </div>
+
+        <div id="error" class="error-message" style="display: none;"></div>
+
+        <div id="table-container" class="table-container" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Sender</th>
+                        <th style="width: 20%;">Subject Line</th>
+                        <th style="width: 12%;">Category</th>
+                        <th style="width: 15%;">Sub Category</th>
+                        <th style="width: 25%;">Action Suggested</th>
+                        <th style="width: 13%;">Action Taken</th>
+                    </tr>
+                </thead>
+                <tbody id="email-table-body">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+            <div class="pagination">
+                <button id="prevBtn" onclick="previousPage()">← Previous</button>
+                <span class="page-info">Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
+                <button id="nextBtn" onclick="nextPage()">Next →</button>
+            </div>
+        </div>
+
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <h2>📭 No Emails Found</h2>
+            <p>No recent emails to display</p>
+        </div>
+    </div>
+
+    <script>
+        let allEmails = [];
+        let currentPage = 1;
+        const emailsPerPage = 10;
+
+        const CATEGORY_ORDER = {
+            'Need-Action': 1,
+            'FYI': 2,
+            'SPAM': 3,
+            'Newsletter': 4,
+            'Other': 5
+        };
+
+        function getCategoryClass(category) {
+            const categoryMap = {
+                'Need-Action': 'category-need-action',
+                'FYI': 'category-fyi',
+                'SPAM': 'category-spam',
+                'Newsletter': 'category-newsletter',
+                'Other': 'category-other'
+            };
+            return categoryMap[category] || 'category-other';
+        }
+
+        function getStatusClass(status) {
+            if (status === 'Yes') return 'status-yes';
+            if (status === 'No') return 'status-no';
+            return 'status-waiting';
+        }
+
+        function formatActionSuggested(email) {
+            const category = email.category;
+
+            // For Need-Action: show automation results
+            if (category === 'Need-Action') {
+                if (email.automation_result) {
+                    return email.automation_result;
+                }
+                return email.action_item || 'No action suggested';
+            }
+
+            // For SPAM: show unsubscribe info
+            if (category === 'SPAM') {
+                if (email.spam_info) {
+                    return email.spam_info;
+                }
+                return 'SPAM detected';
+            }
+
+            // For Other/General: show action_item
+            if (category === 'Other') {
+                return email.action_item || 'No action suggested';
+            }
+
+            // For FYI and Newsletter: N/A
+            return 'N/A';
+        }
+
+        function loadGeminiReview() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const tableContainer = document.getElementById('table-container');
+            const emptyState = document.getElementById('empty-state');
+            const tbody = document.getElementById('email-table-body');
+
+            // Show loading state
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            tableContainer.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            fetch('/api/gemini-review')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch Gemini review data');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loading.style.display = 'none';
+
+                    if (!data.emails || data.emails.length === 0) {
+                        emptyState.style.display = 'block';
+                        return;
+                    }
+
+                    // Update stats
+                    document.getElementById('total-count').textContent = data.emails.length;
+                    document.getElementById('last-updated').textContent = new Date().toLocaleString();
+
+                    // Sort emails by category priority
+                    allEmails = data.emails.sort((a, b) => {
+                        const orderA = CATEGORY_ORDER[a.category] || 99;
+                        const orderB = CATEGORY_ORDER[b.category] || 99;
+                        return orderA - orderB;
+                    });
+
+                    currentPage = 1;
+                    displayPage();
+                    tableContainer.style.display = 'block';
+                })
+                .catch(err => {
+                    loading.style.display = 'none';
+                    error.style.display = 'block';
+                    error.textContent = `Error: ${err.message}. Please try refreshing the page.`;
+                    console.error('Error loading Gemini review:', err);
+                });
+        }
+
+        function displayPage() {
+            const tbody = document.getElementById('email-table-body');
+            const totalPages = Math.ceil(allEmails.length / emailsPerPage);
+            const start = (currentPage - 1) * emailsPerPage;
+            const end = start + emailsPerPage;
+            const pageEmails = allEmails.slice(start, end);
+
+            tbody.innerHTML = '';
+            pageEmails.forEach(email => {
+                const row = document.createElement('tr');
+                const actionSuggested = formatActionSuggested(email);
+
+                row.innerHTML = `
+                    <td class="sender">${email.from || 'Unknown'}</td>
+                    <td class="subject">${email.subject || 'No Subject'}</td>
+                    <td>
+                        <span class="category-badge ${getCategoryClass(email.category)}">
+                            ${email.category}
+                        </span>
+                    </td>
+                    <td class="subcategory">${email.subcategory || 'N/A'}</td>
+                    <td class="action-suggested">${actionSuggested}</td>
+                    <td class="${getStatusClass(email.action_taken)}">
+                        ${email.action_taken || 'No'}
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            // Update pagination controls
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages;
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(allEmails.length / emailsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayPage();
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayPage();
+            }
+        }
+
+        function refreshData() {
+            loadGeminiReview();
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadGeminiReview);
+    </script>
+</body>
+</html>

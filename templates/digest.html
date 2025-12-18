@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📧 Uday's Email Digest</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">📧 Uday's Email Digest</h1>
+            <div class="header-actions">
+                <div class="metadata">
+                    <div class="metadata-item">
+                        <span class="metadata-label">Last Refreshed:</span>
+                        <span id="lastRefreshed" class="metadata-value">-</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-label">Execution Time:</span>
+                        <span id="executionTime" class="metadata-value">-</span>
+                    </div>
+                </div>
+                <button id="refreshBtn" class="btn btn-primary">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">Get Latest View</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Fetching and processing emails...</p>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message hidden">
+                <div class="error-icon">⚠️</div>
+                <div class="error-content">
+                    <h3>Error Loading Digest</h3>
+                    <p id="errorText"></p>
+                    <button onclick="location.reload()" class="btn btn-secondary">Retry</button>
+                </div>
+            </div>
+
+            <!-- Digest Content -->
+            <div id="digestContent" class="digest-content hidden">
+                <!-- Need Action Section -->
+                <section id="needActionSection" class="digest-section need-action-section hidden">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">🔴</span>
+                            <h2>Need Action</h2>
+                            <span id="needActionCount" class="badge badge-urgent">0</span>
+                        </div>
+                    </div>
+                    <div id="needActionContent" class="section-content"></div>
+                </section>
+
+                <!-- FYI Section -->
+                <section id="fyiSection" class="digest-section fyi-section hidden">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">ℹ️</span>
+                            <h2>FYI - For Your Information</h2>
+                            <span id="fyiCount" class="badge badge-info">0</span>
+                        </div>
+                    </div>
+                    <div id="fyiContent" class="section-content"></div>
+                </section>
+
+                <!-- Newsletters Section -->
+                <section id="newslettersSection" class="digest-section newsletters-section hidden">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">📰</span>
+                            <h2>Newsletters & Updates</h2>
+                            <span id="newslettersCount" class="badge badge-newsletter">0</span>
+                        </div>
+                    </div>
+                    <div id="newslettersContent" class="section-content"></div>
+                </section>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state hidden">
+                    <div class="empty-icon">📭</div>
+                    <h3>No Emails to Display</h3>
+                    <p>Click "Get Latest View" to fetch and categorize your emails</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

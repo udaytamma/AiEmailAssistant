@@ -1,0 +1,11 @@
+# Google API Dependencies
+google-auth==2.27.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.114.0
+google-genai>=1.55.0
+
+# Web Framework
+Flask==3.1.0
+
+# Note: Python 3.14+ includes all standard library modules (json, sqlite3, datetime, etc.)
