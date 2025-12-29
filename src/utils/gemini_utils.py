@@ -11,9 +11,11 @@ from typing import List, Dict, Any, Optional
 
 from .logger_utils import setup_logger, log_exception, log_api_call, log_performance
 from .metrics_utils import get_metrics_tracker
+from .gemini_logger import get_gemini_logger
 
 # Initialize logger
 logger = setup_logger(__name__)
+gemini_logger = get_gemini_logger()
 
 
 class GeminiAPIError(Exception):
@@ -66,15 +68,18 @@ Respond with this exact JSON structure:
   "subcategory": "<one of: Bill-Due, Credit-Card-Payment, Service-Change, Package-Tracker, JobAlert, General>",
   "summary": "<one sentence summary>",
   "action_item": "<one of: AddToCalendar, AddToNotes, Unsubscribe, Delete, None>",
-  "date_due": "<date if applicable, otherwise null>"
+  "date_due": "<date if applicable, otherwise null>",
+  "unsubscribe_email": "<for SPAM only: extract unsubscribe email from message body, otherwise null>"
 }}
 
 Classification Rules:
 - Need-Action: Requires user response (bills, important tasks)
 - FYI: Information only (receipts, updates, confirmations, package delivery updates, online orders)
-- Marketing: Promotional content
-- Newsletters: Newsletters
+- Marketing: Promotional content, sales, offers
+- Newsletter: Regular newsletters, digests
 - SPAM: Unwanted content, suspicious emails
+
+For SPAM emails: Look for unsubscribe email addresses in the message body (like "unsubscribe@company.com" or "optout@domain.com").
 
 Only return the JSON object, nothing else."""
 
@@ -111,12 +116,39 @@ Only return the JSON object, nothing else."""
         try:
             categorization = json.loads(response_text)
             logger.debug(f"Successfully categorized email as: {categorization.get('category')}")
+
+            # Log to Gemini logger
+            gemini_logger.log_interaction(
+                operation="categorize_email",
+                prompt=prompt,
+                response=categorization,
+                metadata={
+                    "model_name": model_name,
+                    "latency_seconds": f"{elapsed:.3f}",
+                    "email_subject": email_dict.get('subject', 'N/A')[:100],
+                    "category": categorization.get('category', 'Unknown')
+                }
+            )
+
             return categorization
 
         except json.JSONDecodeError as e:
             error_msg = f"Invalid JSON response from Gemini: {e}"
             logger.error(f"{error_msg}\nResponse text: {response_text[:200]}")
             metrics.record_error(__name__, "JSONDecodeError", error_msg)
+
+            # Log error to Gemini logger
+            gemini_logger.log_interaction(
+                operation="categorize_email_ERROR",
+                prompt=prompt,
+                response=f"JSON Parse Error: {error_msg}\nRaw response: {response_text}",
+                metadata={
+                    "model_name": model_name,
+                    "latency_seconds": f"{elapsed:.3f}",
+                    "error_type": "JSONDecodeError"
+                }
+            )
+
             raise InvalidResponseError(error_msg)
 
     except Exception as e:
@@ -341,12 +373,40 @@ Only return the JSON object, nothing else."""
                 summary.get('bullet3', '')
             ]
             logger.debug(f"Successfully generated newsletter summary with {len(bullet_points)} points")
+
+            # Log to Gemini logger
+            gemini_logger.log_interaction(
+                operation="generate_newsletter_summary",
+                prompt=prompt,
+                response=summary,
+                metadata={
+                    "model_name": model_name,
+                    "latency_seconds": f"{elapsed:.3f}",
+                    "email_subject": subject[:100],
+                    "body_length": len(email_body),
+                    "truncated": len(email_body) > max_chars
+                }
+            )
+
             return bullet_points
 
         except json.JSONDecodeError as e:
             error_msg = f"Invalid JSON in newsletter summary: {e}"
             logger.error(error_msg)
             metrics.record_error(__name__, "JSONDecodeError", error_msg)
+
+            # Log error to Gemini logger
+            gemini_logger.log_interaction(
+                operation="generate_newsletter_summary_ERROR",
+                prompt=prompt,
+                response=f"JSON Parse Error: {error_msg}\nRaw response: {response_text}",
+                metadata={
+                    "model_name": model_name,
+                    "latency_seconds": f"{elapsed:.3f}",
+                    "error_type": "JSONDecodeError"
+                }
+            )
+
             raise InvalidResponseError(error_msg)
 
     except Exception as e:
@@ -459,12 +519,41 @@ Only return the JSON object, nothing else."""
             summary = json.loads(response_text)
             summary_points = summary.get('summary_points', [])
             logger.debug(f"Successfully generated category summary with {len(summary_points)} points")
+
+            # Log to Gemini logger
+            gemini_logger.log_interaction(
+                operation="generate_category_summary",
+                prompt=prompt,
+                response=summary,
+                metadata={
+                    "model_name": model_name,
+                    "latency_seconds": f"{elapsed:.3f}",
+                    "category_name": category_name,
+                    "num_emails": len(emails),
+                    "num_summary_points": len(summary_points)
+                }
+            )
+
             return summary_points
 
         except json.JSONDecodeError as e:
             error_msg = f"Invalid JSON in category summary: {e}"
             logger.error(error_msg)
             metrics.record_error(__name__, "JSONDecodeError", error_msg)
+
+            # Log error to Gemini logger
+            gemini_logger.log_interaction(
+                operation="generate_category_summary_ERROR",
+                prompt=prompt,
+                response=f"JSON Parse Error: {error_msg}\nRaw response: {response_text}",
+                metadata={
+                    "model_name": model_name,
+                    "latency_seconds": f"{elapsed:.3f}",
+                    "category_name": category_name,
+                    "error_type": "JSONDecodeError"
+                }
+            )
+
             raise InvalidResponseError(error_msg)
 
     except Exception as e:

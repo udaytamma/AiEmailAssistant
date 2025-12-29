@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Interaction Logs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .content {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            box-sizing: border-box;
+        }
+
+        #logsContainer {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .log-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .date-selector {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .date-selector select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-section label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .filter-section input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .log-entry {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .log-timestamp {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .operation-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .operation-categorize {
+            background: #667eea;
+            color: white;
+        }
+
+        .operation-summary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .operation-error {
+            background: #f56565;
+            color: white;
+        }
+
+        .metadata-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .metadata-item {
+            font-size: 13px;
+        }
+
+        .metadata-item strong {
+            color: #333;
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .section-header {
+            font-weight: 600;
+            color: #333;
+            margin: 20px 0 10px 0;
+            padding: 8px 0;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            background: #f8f9fa;
+        }
+
+        .toggle-icon {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .section-content {
+            background: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        .response-json {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="nav-container">
+                <h1>📊 Gemini Interaction Logs</h1>
+                <nav class="nav-menu">
+                    <a href="/">Dashboard</a>
+                    <a href="/gemini-review">Gemini Review</a>
+                    <a href="/gemini-logs" class="active">Gemini Logs</a>
+                    <a href="/test-results">Test Results</a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Controls -->
+            <div class="log-controls">
+                <div class="date-selector">
+                    <label for="dateSelect"><strong>Select Date:</strong></label>
+                    <select id="dateSelect" onchange="loadLogs()">
+                        <option value="">Today</option>
+                    </select>
+                    <input type="search" id="searchBox" class="search-box" placeholder="Search logs..." oninput="filterLogs()">
+                </div>
+
+                <div class="filter-section">
+                    <strong>Filter by Operation:</strong>
+                    <label>
+                        <input type="checkbox" value="categorize_email" checked onchange="filterLogs()">
+                        Categorize Email
+                    </label>
+                    <label>
+                        <input type="checkbox" value="generate_newsletter_summary" checked onchange="filterLogs()">
+                        Newsletter Summary
+                    </label>
+                    <label>
+                        <input type="checkbox" value="generate_category_summary" checked onchange="filterLogs()">
+                        Category Summary
+                    </label>
+                    <label>
+                        <input type="checkbox" value="ERROR" checked onchange="filterLogs()">
+                        Errors
+                    </label>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-bar" id="statsBar" style="display: none;">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalLogs">0</div>
+                    <div class="stat-label">Total Logs</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="avgLatency">0</div>
+                    <div class="stat-label">Avg Latency (s)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="categorizeCount">0</div>
+                    <div class="stat-label">Categorizations</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="summaryCount">0</div>
+                    <div class="stat-label">Summaries</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="errorCount">0</div>
+                    <div class="stat-label">Errors</div>
+                </div>
+            </div>
+
+            <!-- Logs Container -->
+            <div id="logsContainer">
+                <div class="loading">Loading Gemini logs...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allEntries = [];
+        let availableDates = [];
+
+        function loadLogs() {
+            const dateSelect = document.getElementById('dateSelect');
+            const selectedDate = dateSelect.value;
+
+            const url = selectedDate ? `/api/gemini-logs?date=${selectedDate}` : '/api/gemini-logs';
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    allEntries = data.entries || [];
+                    availableDates = data.available_dates || [];
+
+                    // Populate date selector
+                    populateDateSelector(data.current_date);
+
+                    // Calculate and display stats
+                    updateStats();
+
+                    // Display logs
+                    filterLogs();
+                })
+                .catch(error => {
+                    console.error('Error loading Gemini logs:', error);
+                    document.getElementById('logsContainer').innerHTML =
+                        `<div class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <h3>Error Loading Logs</h3>
+                            <p>${error.message}</p>
+                        </div>`;
+                });
+        }
+
+        function populateDateSelector(currentDate) {
+            const dateSelect = document.getElementById('dateSelect');
+            const currentValue = dateSelect.value;
+
+            dateSelect.innerHTML = '<option value="">Today</option>';
+
+            availableDates.forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = date;
+                if (date === currentDate && !currentValue) {
+                    option.selected = true;
+                }
+                dateSelect.appendChild(option);
+            });
+        }
+
+        function updateStats() {
+            if (allEntries.length === 0) {
+                document.getElementById('statsBar').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('statsBar').style.display = 'flex';
+
+            // Calculate stats
+            const totalLogs = allEntries.length;
+            let totalLatency = 0;
+            let categorizeCount = 0;
+            let summaryCount = 0;
+            let errorCount = 0;
+
+            allEntries.forEach(entry => {
+                const latency = parseFloat(entry.metadata?.latency_seconds || 0);
+                totalLatency += latency;
+
+                if (entry.operation?.includes('categorize')) categorizeCount++;
+                if (entry.operation?.includes('summary')) summaryCount++;
+                if (entry.operation?.includes('ERROR')) errorCount++;
+            });
+
+            const avgLatency = totalLogs > 0 ? (totalLatency / totalLogs).toFixed(3) : 0;
+
+            // Update display
+            document.getElementById('totalLogs').textContent = totalLogs;
+            document.getElementById('avgLatency').textContent = avgLatency;
+            document.getElementById('categorizeCount').textContent = categorizeCount;
+            document.getElementById('summaryCount').textContent = summaryCount;
+            document.getElementById('errorCount').textContent = errorCount;
+        }
+
+        function filterLogs() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const checkedOperations = Array.from(document.querySelectorAll('.filter-section input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+
+            const filteredEntries = allEntries.filter(entry => {
+                // Check operation filter
+                const operationMatch = checkedOperations.some(op => entry.operation?.includes(op));
+                if (!operationMatch) return false;
+
+                // Check search term
+                if (searchTerm) {
+                    const searchableText = JSON.stringify(entry).toLowerCase();
+                    return searchableText.includes(searchTerm);
+                }
+
+                return true;
+            });
+
+            displayLogs(filteredEntries);
+        }
+
+        function displayLogs(entries) {
+            const container = document.getElementById('logsContainer');
+
+            if (entries.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>No Logs Found</h3>
+                        <p>No Gemini interactions logged yet for this date.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort entries by timestamp - latest first
+            const sortedEntries = [...entries].sort((a, b) => {
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+
+            container.innerHTML = sortedEntries.map((entry, index) => {
+                const operationClass = entry.operation?.includes('ERROR') ? 'operation-error' :
+                                     entry.operation?.includes('summary') ? 'operation-summary' :
+                                     'operation-categorize';
+
+                const metadata = entry.metadata || {};
+                const metadataHtml = Object.entries(metadata).map(([key, value]) =>
+                    `<div class="metadata-item"><strong>${key}:</strong> ${value}</div>`
+                ).join('');
+
+                return `
+                    <div class="log-entry">
+                        <div class="log-header">
+                            <div>
+                                <span class="operation-badge ${operationClass}">${entry.operation || 'Unknown'}</span>
+                                <div class="log-timestamp">⏱️ ${entry.timestamp || 'N/A'}</div>
+                            </div>
+                        </div>
+
+                        ${metadataHtml ? `<div class="metadata-section">${metadataHtml}</div>` : ''}
+
+                        <div class="section-header" onclick="toggleSection(${index}, 'request')">
+                            REQUEST (Prompt)
+                            <span class="toggle-icon" id="toggle-request-${index}">▼</span>
+                        </div>
+                        <div class="section-content" id="request-${index}">
+${entry.request || 'No request data'}
+                        </div>
+
+                        <div class="section-header" onclick="toggleSection(${index}, 'response')">
+                            RESPONSE
+                            <span class="toggle-icon" id="toggle-response-${index}">▼</span>
+                        </div>
+                        <div class="section-content response-json" id="response-${index}">
+${typeof entry.response === 'object' ? JSON.stringify(entry.response, null, 2) : entry.response || 'No response data'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleSection(index, section) {
+            const content = document.getElementById(`${section}-${index}`);
+            const toggle = document.getElementById(`toggle-${section}-${index}`);
+
+            content.classList.toggle('collapsed');
+            toggle.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
+        // Load logs on page load
+        document.addEventListener('DOMContentLoaded', loadLogs);
+    </script>
+</body>
+</html>

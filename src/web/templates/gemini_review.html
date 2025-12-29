@@ -144,6 +144,12 @@
             vertical-align: top;
         }
 
+        .summary {
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.4;
+        }
+
         .category-badge {
             display: inline-block;
             padding: 5px 12px;
@@ -173,9 +179,72 @@
             color: white;
         }
 
+        .category-marketing {
+            background: #e67e22;
+            color: white;
+        }
+
         .category-other {
             background: #9b59b6;
             color: white;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover:not(:disabled) {
+            background: #c0392b;
+        }
+
+        .btn-unsubscribe {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-unsubscribe:hover:not(:disabled) {
+            background: #7f8c8d;
+        }
+
+        .action-dropdown {
+            padding: 6px 12px;
+            border: 1px solid #667eea;
+            border-radius: 4px;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .action-status {
+            color: #27ae60;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .action-error {
+            color: #e74c3c;
+            font-size: 0.8em;
         }
 
         .status-yes {
@@ -313,12 +382,13 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 15%;">Sender</th>
-                        <th style="width: 20%;">Subject Line</th>
-                        <th style="width: 12%;">Category</th>
-                        <th style="width: 15%;">Sub Category</th>
-                        <th style="width: 25%;">Action Suggested</th>
-                        <th style="width: 13%;">Action Taken</th>
+                        <th style="width: 12%;">Sender</th>
+                        <th style="width: 15%;">Subject Line</th>
+                        <th style="width: 25%;">Summary</th>
+                        <th style="width: 10%;">Category</th>
+                        <th style="width: 12%;">Sub Category</th>
+                        <th style="width: 15%;">Action Suggested</th>
+                        <th style="width: 11%;">Action Taken</th>
                     </tr>
                 </thead>
                 <tbody id="email-table-body">
@@ -348,7 +418,8 @@
             'FYI': 2,
             'SPAM': 3,
             'Newsletter': 4,
-            'Other': 5
+            'Marketing': 5,
+            'Other': 6
         };
 
         function getCategoryClass(category) {
@@ -357,6 +428,7 @@
                 'FYI': 'category-fyi',
                 'SPAM': 'category-spam',
                 'Newsletter': 'category-newsletter',
+                'Marketing': 'category-marketing',
                 'Other': 'category-other'
             };
             return categoryMap[category] || 'category-other';
@@ -447,6 +519,119 @@
                 });
         }
 
+        function generateActionControl(email) {
+            const category = email.category;
+            const emailId = email.id;
+
+            // For FYI, Newsletter, Marketing: Show Delete button
+            if (['FYI', 'Newsletter', 'Marketing'].includes(category)) {
+                return `<button class="action-btn btn-delete" onclick="deleteEmail('${emailId}', this)">Delete</button>`;
+            }
+
+            // For Need-Action: Show dropdown
+            if (category === 'Need-Action') {
+                return `
+                    <select class="action-dropdown" onchange="handleNeedAction('${emailId}', this)">
+                        <option value="">Select action...</option>
+                        <option value="calendar">Add to Calendar</option>
+                        <option value="task">Add to Task</option>
+                        <option value="read">Mark as Read</option>
+                        <option value="delete">Delete</option>
+                    </select>
+                `;
+            }
+
+            // For SPAM: Show Unsubscribe button or "no email" message
+            if (category === 'SPAM') {
+                const unsubEmail = email.unsubscribe_email;
+                if (unsubEmail) {
+                    return `<button class="action-btn btn-unsubscribe" onclick="unsubscribeEmail('${emailId}', '${unsubEmail}', this)">Unsubscribe</button>`;
+                } else {
+                    return `<span class="action-error">No to-email found</span>`;
+                }
+            }
+
+            return 'N/A';
+        }
+
+        async function performEmailAction(endpoint, data, actionCell, successMessage) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    actionCell.innerHTML = `<span class="action-status">Completed</span>`;
+                } else {
+                    actionCell.innerHTML = `<span class="action-error">Error: ${result.error || 'Unknown error'}</span>`;
+                }
+            } catch (error) {
+                actionCell.innerHTML = `<span class="action-error">Error: ${error.message}</span>`;
+            }
+        }
+
+        function deleteEmail(emailId, button) {
+            const actionCell = button.parentElement;
+            button.disabled = true;
+            button.textContent = 'Deleting...';
+
+            performEmailAction('/api/email/delete', { email_id: emailId }, actionCell, 'Deleted');
+        }
+
+        function handleNeedAction(emailId, dropdown) {
+            const action = dropdown.value;
+            if (!action) return;
+
+            const actionCell = dropdown.parentElement;
+            dropdown.disabled = true;
+
+            let endpoint, data, message;
+
+            switch(action) {
+                case 'calendar':
+                    endpoint = '/api/email/add-calendar';
+                    data = { email_id: emailId, subject: 'Calendar Event' };
+                    message = 'Added to Calendar';
+                    break;
+                case 'task':
+                    endpoint = '/api/email/add-task';
+                    data = { email_id: emailId, subject: 'Task' };
+                    message = 'Added to Tasks';
+                    break;
+                case 'read':
+                    endpoint = '/api/email/mark-read';
+                    data = { email_id: emailId };
+                    message = 'Marked as Read';
+                    break;
+                case 'delete':
+                    endpoint = '/api/email/delete';
+                    data = { email_id: emailId };
+                    message = 'Deleted';
+                    break;
+            }
+
+            performEmailAction(endpoint, data, actionCell, message);
+        }
+
+        function unsubscribeEmail(emailId, unsubEmail, button) {
+            const actionCell = button.parentElement;
+            button.disabled = true;
+            button.textContent = 'Unsubscribing...';
+
+            performEmailAction(
+                '/api/email/unsubscribe',
+                { email_id: emailId, unsubscribe_email: unsubEmail },
+                actionCell,
+                'Unsubscribe Sent'
+            );
+        }
+
         function displayPage() {
             const tbody = document.getElementById('email-table-body');
             const totalPages = Math.ceil(allEmails.length / emailsPerPage);
@@ -458,10 +643,12 @@
             pageEmails.forEach(email => {
                 const row = document.createElement('tr');
                 const actionSuggested = formatActionSuggested(email);
+                const actionControl = generateActionControl(email);
 
                 row.innerHTML = `
                     <td class="sender">${email.from || 'Unknown'}</td>
                     <td class="subject">${email.subject || 'No Subject'}</td>
+                    <td class="summary">${email.summary || 'N/A'}</td>
                     <td>
                         <span class="category-badge ${getCategoryClass(email.category)}">
                             ${email.category}
@@ -469,9 +656,7 @@
                     </td>
                     <td class="subcategory">${email.subcategory || 'N/A'}</td>
                     <td class="action-suggested">${actionSuggested}</td>
-                    <td class="${getStatusClass(email.action_taken)}">
-                        ${email.action_taken || 'No'}
-                    </td>
+                    <td>${actionControl}</td>
                 `;
 
                 tbody.appendChild(row);

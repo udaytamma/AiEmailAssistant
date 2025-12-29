@@ -10,9 +10,14 @@ import subprocess
 import threading
 import traceback
 import sys
+import base64
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, jsonify, request
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -32,6 +37,81 @@ app = Flask(__name__, template_folder=str(template_dir), static_folder=str(stati
 # File paths
 LOCK_FILE = Path(__file__).parent.parent.parent / 'script.lock'
 DIGEST_FILE = Path(__file__).parent.parent.parent / 'data' / 'digest' / 'digest_data.json'
+
+# Google API scopes
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/tasks'
+]
+
+# Global service instances
+gmail_service = None
+calendar_service = None
+tasks_service = None
+
+
+def init_google_services():
+    """Initialize Gmail, Calendar, and Tasks services."""
+    global gmail_service, calendar_service, tasks_service
+
+    try:
+        creds = None
+
+        # Load existing credentials from token.json if available
+        if os.path.exists('token.json'):
+            try:
+                creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+                logger.debug("Loaded credentials from token.json")
+            except Exception as e:
+                logger.warning(f"Failed to load token.json, will re-authenticate: {e}")
+                creds = None
+
+        # If no valid credentials, initiate OAuth flow
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                try:
+                    logger.info("Refreshing expired token...")
+                    creds.refresh(Request())
+                    logger.info("Token refreshed successfully")
+                except Exception as e:
+                    logger.error(f"Token refresh failed: {e}")
+                    raise Exception(f"Failed to refresh token: {e}")
+            else:
+                # New authentication flow using credentials.json
+                if not os.path.exists('credentials.json'):
+                    error_msg = "credentials.json not found. Please download it from Google Cloud Console."
+                    logger.error(error_msg)
+                    raise FileNotFoundError(error_msg)
+
+                try:
+                    logger.info("Starting new OAuth flow...")
+                    flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+                    creds = flow.run_local_server(port=0)
+                    logger.info("OAuth flow completed successfully")
+                except Exception as e:
+                    error_msg = f"OAuth flow failed: {e}"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
+
+            # Save credentials for future use
+            try:
+                with open('token.json', 'w') as token:
+                    token.write(creds.to_json())
+                logger.debug("Credentials saved to token.json")
+            except Exception as e:
+                logger.warning(f"Failed to save token.json: {e}")
+
+        # Build service instances
+        gmail_service = build('gmail', 'v1', credentials=creds)
+        calendar_service = build('calendar', 'v3', credentials=creds)
+        tasks_service = build('tasks', 'v1', credentials=creds)
+
+        logger.info("Google services initialized successfully")
+
+    except Exception as e:
+        logger.error(f"Failed to initialize Google services: {e}")
+        # Services will remain None, and API endpoints will handle gracefully
 
 
 def is_script_running() -> bool:
@@ -206,6 +286,57 @@ def gemini_review_page():
     except Exception as e:
         log_exception(logger, e, "Error serving Gemini review page")
         return f"Error loading page: {e}", 500
+
+
+@app.route('/gemini-logs')
+def gemini_logs_page():
+    """Serve the Gemini logs page."""
+    logger.debug("Serving Gemini logs page")
+    try:
+        return render_template('gemini_logs.html')
+    except Exception as e:
+        log_exception(logger, e, "Error serving Gemini logs page")
+        return f"Error loading page: {e}", 500
+
+
+@app.route('/api/gemini-logs')
+def get_gemini_logs():
+    """
+    API endpoint to get Gemini interaction logs.
+
+    Query Parameters:
+        date: Optional date string (YYYY-MM-DD). Defaults to today.
+
+    Returns:
+        JSON response with log entries
+    """
+    logger.debug("API: Get Gemini logs request")
+
+    try:
+        from utils.gemini_logger import get_gemini_logger
+        gemini_logger = get_gemini_logger()
+
+        # Get date from query parameter or use today
+        date = request.args.get('date', None)
+
+        # Get log entries
+        entries = gemini_logger.get_log_entries(date)
+
+        # Get available dates
+        available_dates = gemini_logger.get_available_dates()
+
+        logger.debug(f"Returned {len(entries)} Gemini log entries for date: {date or 'today'}")
+        return jsonify({
+            'entries': entries,
+            'available_dates': available_dates,
+            'current_date': date or datetime.now().strftime('%Y-%m-%d')
+        })
+
+    except Exception as e:
+        log_exception(logger, e, "Error fetching Gemini logs")
+        return jsonify({
+            'error': f'Failed to fetch Gemini logs: {str(e)}'
+        }), 500
 
 
 @app.route('/api/digest')
@@ -613,6 +744,7 @@ def get_gemini_review():
             response_emails.append({
                 'from': email.get('from', 'Unknown'),
                 'subject': email.get('subject', 'No Subject'),
+                'summary': email.get('summary', 'N/A'),
                 'category': category,
                 'subcategory': email.get('subcategory', ''),
                 'action_item': email.get('action_item', ''),
@@ -636,6 +768,349 @@ def get_gemini_review():
         return jsonify({
             'error': f'Failed to process emails: {str(e)}'
         }), 500
+
+
+@app.route('/api/email/delete', methods=['POST'])
+def delete_email():
+    """Delete an email from Gmail."""
+    import time
+    from utils.gemini_logger import get_gemini_logger
+
+    start_time = time.time()
+    try:
+        if gmail_service is None:
+            return jsonify({'success': False, 'error': 'Gmail service not initialized'}), 500
+
+        data = request.get_json()
+        email_id = data.get('email_id')
+
+        if not email_id:
+            return jsonify({'success': False, 'error': 'Email ID required'}), 400
+
+        # Delete email from Gmail
+        api_call = f"gmail_service.users().messages().trash(userId='me', id='{email_id}')"
+        gmail_service.users().messages().trash(userId='me', id=email_id).execute()
+
+        elapsed = time.time() - start_time
+
+        # Log to Gemini logger
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="gmail_delete_email",
+            prompt=f"API Call: {api_call}\n\nRequest Data:\n{json.dumps(data, indent=2)}",
+            response={"success": True, "message": "Email moved to trash", "email_id": email_id},
+            metadata={
+                "api": "Gmail API",
+                "method": "messages.trash",
+                "latency_seconds": f"{elapsed:.3f}",
+                "email_id": email_id
+            }
+        )
+
+        logger.info(f"Email deleted: {email_id}")
+        return jsonify({'success': True, 'message': 'Email deleted'})
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+        log_exception(logger, e, "Error deleting email")
+
+        # Log error
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="gmail_delete_email_ERROR",
+            prompt=f"API Call: messages.trash\n\nRequest Data:\n{json.dumps(data, indent=2)}",
+            response=f"Error: {str(e)}",
+            metadata={
+                "api": "Gmail API",
+                "method": "messages.trash",
+                "latency_seconds": f"{elapsed:.3f}",
+                "error_type": type(e).__name__
+            }
+        )
+
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/email/mark-read', methods=['POST'])
+def mark_email_read():
+    """Mark an email as read."""
+    import time
+    from utils.gemini_logger import get_gemini_logger
+
+    start_time = time.time()
+    try:
+        if gmail_service is None:
+            return jsonify({'success': False, 'error': 'Gmail service not initialized'}), 500
+
+        data = request.get_json()
+        email_id = data.get('email_id')
+
+        if not email_id:
+            return jsonify({'success': False, 'error': 'Email ID required'}), 400
+
+        # Mark as read by removing UNREAD label
+        api_call = f"gmail_service.users().messages().modify(userId='me', id='{email_id}', body={{'removeLabelIds': ['UNREAD']}})"
+        gmail_service.users().messages().modify(
+            userId='me',
+            id=email_id,
+            body={'removeLabelIds': ['UNREAD']}
+        ).execute()
+
+        elapsed = time.time() - start_time
+
+        # Log to Gemini logger
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="gmail_mark_read",
+            prompt=f"API Call: {api_call}\n\nRequest Data:\n{json.dumps(data, indent=2)}",
+            response={"success": True, "message": "Email marked as read", "email_id": email_id, "action": "Removed UNREAD label"},
+            metadata={
+                "api": "Gmail API",
+                "method": "messages.modify",
+                "latency_seconds": f"{elapsed:.3f}",
+                "email_id": email_id
+            }
+        )
+
+        logger.info(f"Email marked as read: {email_id}")
+        return jsonify({'success': True, 'message': 'Email marked as read'})
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+        log_exception(logger, e, "Error marking email as read")
+
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="gmail_mark_read_ERROR",
+            prompt=f"API Call: messages.modify\n\nRequest Data:\n{json.dumps(data, indent=2)}",
+            response=f"Error: {str(e)}",
+            metadata={
+                "api": "Gmail API",
+                "method": "messages.modify",
+                "latency_seconds": f"{elapsed:.3f}",
+                "error_type": type(e).__name__
+            }
+        )
+
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/email/add-calendar', methods=['POST'])
+def add_to_calendar():
+    """Add event to Google Calendar."""
+    import time
+    from utils.gemini_logger import get_gemini_logger
+
+    start_time = time.time()
+    try:
+        if calendar_service is None:
+            return jsonify({'success': False, 'error': 'Calendar service not initialized'}), 500
+
+        data = request.get_json()
+        email_id = data.get('email_id')
+        subject = data.get('subject', 'Email Event')
+
+        if not email_id:
+            return jsonify({'success': False, 'error': 'Email ID required'}), 400
+
+        # Create a calendar event (placeholder - needs actual event details)
+        event = {
+            'summary': subject,
+            'description': f'Created from email',
+            'start': {
+                'dateTime': '2025-12-19T10:00:00',
+                'timeZone': 'America/Los_Angeles',
+            },
+            'end': {
+                'dateTime': '2025-12-19T11:00:00',
+                'timeZone': 'America/Los_Angeles',
+            },
+        }
+
+        api_call = f"calendar_service.events().insert(calendarId='primary', body={json.dumps(event, indent=2)})"
+        result = calendar_service.events().insert(calendarId='primary', body=event).execute()
+
+        elapsed = time.time() - start_time
+
+        # Log to Gemini logger
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="calendar_add_event",
+            prompt=f"API Call: {api_call}\n\nRequest Data:\n{json.dumps(data, indent=2)}\n\nEvent Details:\n{json.dumps(event, indent=2)}",
+            response={"success": True, "message": "Event created", "event_id": result.get('id'), "event": event},
+            metadata={
+                "api": "Calendar API",
+                "method": "events.insert",
+                "latency_seconds": f"{elapsed:.3f}",
+                "email_id": email_id,
+                "event_summary": subject
+            }
+        )
+
+        logger.info(f"Calendar event created for email: {email_id}")
+        return jsonify({'success': True, 'message': 'Added to calendar'})
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+        log_exception(logger, e, "Error adding to calendar")
+
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="calendar_add_event_ERROR",
+            prompt=f"API Call: events.insert\n\nRequest Data:\n{json.dumps(data, indent=2)}",
+            response=f"Error: {str(e)}",
+            metadata={
+                "api": "Calendar API",
+                "method": "events.insert",
+                "latency_seconds": f"{elapsed:.3f}",
+                "error_type": type(e).__name__
+            }
+        )
+
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/email/add-task', methods=['POST'])
+def add_to_tasks():
+    """Add task to Google Tasks."""
+    import time
+    from utils.gemini_logger import get_gemini_logger
+
+    start_time = time.time()
+    try:
+        if tasks_service is None:
+            return jsonify({'success': False, 'error': 'Tasks service not initialized'}), 500
+
+        data = request.get_json()
+        email_id = data.get('email_id')
+        subject = data.get('subject', 'Email Task')
+
+        if not email_id:
+            return jsonify({'success': False, 'error': 'Email ID required'}), 400
+
+        # Create a task
+        task = {
+            'title': subject,
+            'notes': f'Created from email'
+        }
+
+        api_call = f"tasks_service.tasks().insert(tasklist='@default', body={json.dumps(task, indent=2)})"
+        result = tasks_service.tasks().insert(tasklist='@default', body=task).execute()
+
+        elapsed = time.time() - start_time
+
+        # Log to Gemini logger
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="tasks_add_task",
+            prompt=f"API Call: {api_call}\n\nRequest Data:\n{json.dumps(data, indent=2)}\n\nTask Details:\n{json.dumps(task, indent=2)}",
+            response={"success": True, "message": "Task created", "task_id": result.get('id'), "task": task},
+            metadata={
+                "api": "Tasks API",
+                "method": "tasks.insert",
+                "latency_seconds": f"{elapsed:.3f}",
+                "email_id": email_id,
+                "task_title": subject
+            }
+        )
+
+        logger.info(f"Task created for email: {email_id}")
+        return jsonify({'success': True, 'message': 'Added to tasks'})
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+        log_exception(logger, e, "Error adding to tasks")
+
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="tasks_add_task_ERROR",
+            prompt=f"API Call: tasks.insert\n\nRequest Data:\n{json.dumps(data, indent=2)}",
+            response=f"Error: {str(e)}",
+            metadata={
+                "api": "Tasks API",
+                "method": "tasks.insert",
+                "latency_seconds": f"{elapsed:.3f}",
+                "error_type": type(e).__name__
+            }
+        )
+
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/email/unsubscribe', methods=['POST'])
+def unsubscribe_email():
+    """Send unsubscribe request."""
+    import time
+    from utils.gemini_logger import get_gemini_logger
+
+    start_time = time.time()
+    try:
+        if gmail_service is None:
+            return jsonify({'success': False, 'error': 'Gmail service not initialized'}), 500
+
+        data = request.get_json()
+        email_id = data.get('email_id')
+        unsubscribe_email_addr = data.get('unsubscribe_email')
+
+        if not email_id:
+            return jsonify({'success': False, 'error': 'Email ID required'}), 400
+
+        if not unsubscribe_email_addr:
+            return jsonify({'success': False, 'error': 'No unsubscribe email found'}), 400
+
+        # Create unsubscribe email
+        message = f"""To: {unsubscribe_email_addr}
+Subject: Unsubscribe Request
+
+Please remove me from your mailing list.
+"""
+
+        # Send via Gmail
+        raw_message = base64.urlsafe_b64encode(message.encode()).decode()
+        api_call = f"gmail_service.users().messages().send(userId='me', body={{'raw': '<base64_encoded_message>'}})"
+        result = gmail_service.users().messages().send(
+            userId='me',
+            body={'raw': raw_message}
+        ).execute()
+
+        elapsed = time.time() - start_time
+
+        # Log to Gemini logger
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="gmail_send_unsubscribe",
+            prompt=f"API Call: {api_call}\n\nRequest Data:\n{json.dumps(data, indent=2)}\n\nEmail Message:\n{message}",
+            response={"success": True, "message": "Unsubscribe email sent", "message_id": result.get('id'), "to": unsubscribe_email_addr},
+            metadata={
+                "api": "Gmail API",
+                "method": "messages.send",
+                "latency_seconds": f"{elapsed:.3f}",
+                "email_id": email_id,
+                "unsubscribe_to": unsubscribe_email_addr
+            }
+        )
+
+        logger.info(f"Unsubscribe email sent to: {unsubscribe_email_addr}")
+        return jsonify({'success': True, 'message': 'Unsubscribe request sent'})
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+        log_exception(logger, e, "Error sending unsubscribe")
+
+        gemini_logger = get_gemini_logger()
+        gemini_logger.log_interaction(
+            operation="gmail_send_unsubscribe_ERROR",
+            prompt=f"API Call: messages.send\n\nRequest Data:\n{json.dumps(data, indent=2)}",
+            response=f"Error: {str(e)}",
+            metadata={
+                "api": "Gmail API",
+                "method": "messages.send",
+                "latency_seconds": f"{elapsed:.3f}",
+                "error_type": type(e).__name__
+            }
+        )
+
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.errorhandler(404)
@@ -670,6 +1145,11 @@ if __name__ == '__main__':
         print(f"\n🌐 Starting server on http://localhost:8001")
         print("📧 Access your daily digest at: http://localhost:8001")
         print("\nPress CTRL+C to stop the server\n")
+
+        # Initialize Google services (Gmail, Calendar, Tasks)
+        print("🔐 Initializing Google services...")
+        init_google_services()
+        print("✅ Google services initialized\n")
 
         # Run Flask app
         app.run(host='0.0.0.0', port=8001, debug=True, use_reloader=False)
