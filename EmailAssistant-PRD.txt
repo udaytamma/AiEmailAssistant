@@ -1,0 +1,105 @@
+Based on the image provided, here is the text extracted, organized, and analyzed, followed by a technical roadmap to build this system.
+
+###**I. Transcribed Text****Title:** Summary => Classification of new Emails
+
+**Process Flow:**
+
+1. **Script:** Checks email for new messages -> Read them.
+2. **Action:** Classify the type of Email.
+
+**Classification Categories:**
+
+* **Need Action:** (High priority)
+* **Just FYI - Updates:**
+* Bill Due -> *Action: Add to Calendar*
+* Credit Card (CC) Paid
+* Changes to Service -> *Action: Add to Notes*
+* Package Tracker
+
+
+* **Marketing**
+* **Spam**
+* (A) -> Want me to unsubscribe
+* (A) -> Delete Spam
+
+
+
+**Output:**
+
+* **End Goal:** Send "Summary Email"
+
+**Technical Logic (Bottom Section):**
+
+* Script runs 2x a day.
+* Needs access to Gmail to read emails / Delete or Unsubscribe.
+* Sends data to Gemini for classification.
+* Organize / Prepare data for Summary Email.
+* **Advanced Feature:** Can add Context & Memory for Rolling Events.
+
+---
+
+###**II. Analysis of the Task**You are designing an **"AI-Powered Email Executive Assistant"**.
+
+Instead of you manually triageing your inbox, a script acts as a filter. It doesn't just sort emails; it "reads" them using Gemini to understand the *content*, performs digital chores (like adding bills to a calendar), and then gives you a brief daily digest.
+
+**Key Challenges:**
+
+1. **Security:** Giving a script permission to read/delete your emails requires careful OAuth setup.
+2. **"Unsubscribe" Logic:** This is tricky. Programmatic unsubscribing usually requires parsing specific email headers (`List-Unsubscribe`) or navigating the web, which is complex for a simple script.
+3. **Memory:** Tracking "Rolling Events" implies the script needs a database or a log file to remember what happened in the morning run so it makes sense in the evening run.
+
+---
+
+###**III. How to Accomplish This (Implementation Plan)**Here is a step-by-step guide to building this using **Python** and **Google Cloud**.
+
+####**Step 1: The Tech Stack*** **Language:** Python (best libraries for Gmail and AI).
+* **APIs:**
+* **Gmail API:** To fetch emails, modify labels (archive/trash), and send the summary.
+* **Google Calendar API:** To add "Bill Due" events.
+* **Gemini API (Google AI Studio):** To analyze the text and classify it.
+
+
+* **Hosting:** Google Cloud Functions (serverless, cheap/free) or a local Raspberry Pi/Server.
+
+####**Step 2: The Workflow Logic****1. Fetching (The Input)**
+Use the Gmail API to search for messages received in the last 12 hours.
+
+* *Filter:* `label:INBOX is:unread newer_than:12h`
+
+**2. The "Brain" (Gemini Integration)**
+Loop through the emails and send the `subject` and `body` to Gemini. You need a structured prompt to get clean data back.
+
+> **Prompt Strategy:**
+> "I will paste an email below. Respond ONLY with a JSON object containing:
+> * `category`: (Action, FYI, Marketing, Spam)
+> * `summary`: (One sentence summary)
+> * `action_item`: (e.g., 'Add to calendar', 'Unsubscribe', 'None')
+> * `date_due`: (If applicable)"
+> 
+> 
+
+**3. The Execution (The Actions)**
+Parse the JSON response from Gemini:
+
+* **If `category` == "Spam":** Call Gmail API to `trash` the message.
+* **If `action_item` == "Add to calendar":** Parse the `date_due` and use the Calendar API to create an all-day event.
+* **If `action_item` == "Unsubscribe":** This is hard to automate safely. *Suggestion:* Instead of auto-unsubscribing, have the script apply a Gmail Label named "To Unsubscribe" so you can do them all in one batch later.
+
+**4. The Memory (Context)**
+To handle "Rolling Events," save a simple `log.json` file.
+
+* When the script runs, it reads `log.json` to see previous context.
+* *Example:* If an email says "Re: Project X", the script checks the log to see what "Project X" is about before summarizing.
+
+**5. The Output (Summary Email)**
+Collect all the summaries into a clean HTML format.
+
+* **Header:** "Morning Briefing"
+* **Section 1 (Action Items):** "You need to reply to Mom." / "Pay Electric Bill."
+* **Section 2 (FYI):** "Netflix bill paid." / "Amazon package shipped."
+* **Footer:** "Processed 45 emails. Deleted 12 spam messages."
+Send this email to yourself via the Gmail API.
+
+####**Step 3: Automation*** **Option A (Easiest):** Run it locally on your computer using Windows Task Scheduler or Mac Cron. (Computer must be on).
+* **Option B (Best):** Deploy to **Google Cloud Functions** and use **Cloud Scheduler** to trigger it at 8:00 AM and 6:00 PM.
+
