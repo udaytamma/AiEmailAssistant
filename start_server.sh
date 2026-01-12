@@ -9,7 +9,7 @@ echo ""
 source .venv/bin/activate
 
 # Set API key
-export GOOGLE_API_KEY='AIzaSyA1GD5wywl9HKvp68GpiYjyjnSiyBJSflM'
+export GOOGLE_API_KEY='REDACTED_GEMINI_API_KEY'
 
 # Start Flask server
 python digest_server.py
