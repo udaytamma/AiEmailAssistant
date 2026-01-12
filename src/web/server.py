@@ -189,7 +189,7 @@ def run_email_assistant():
 
         if not api_key:
             # Try fallback key
-            api_key = 'AIzaSyA1GD5wywl9HKvp68GpiYjyjnSiyBJSflM'
+            api_key = 'AIzaSyD-tzw5Rp3DZ9jMMctwqPyMxdEsv2ZXoRU'
             env['GOOGLE_API_KEY'] = api_key
             logger.warning("Using fallback API key")
 
@@ -666,7 +666,7 @@ def get_gemini_review():
         # Get API key
         api_key = os.environ.get('GOOGLE_API_KEY')
         if not api_key:
-            api_key = 'AIzaSyA1GD5wywl9HKvp68GpiYjyjnSiyBJSflM'  # Fallback
+            api_key = 'AIzaSyD-tzw5Rp3DZ9jMMctwqPyMxdEsv2ZXoRU'  # Fallback
             os.environ['GOOGLE_API_KEY'] = api_key
 
         # Connect to Gmail

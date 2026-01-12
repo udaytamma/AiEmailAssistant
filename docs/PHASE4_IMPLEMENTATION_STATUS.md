@@ -549,7 +549,7 @@ cd "$(dirname "$0")/.."
 source .venv/bin/activate
 
 # Set API key
-export GOOGLE_API_KEY='AIzaSyA1GD5wywl9HKvp68GpiYjyjnSiyBJSflM'
+export GOOGLE_API_KEY='AIzaSyD-tzw5Rp3DZ9jMMctwqPyMxdEsv2ZXoRU'
 
 # Start Flask server
 python src/web/server.py
