@@ -527,7 +527,7 @@ google-generativeai==0.3.2
 Flask==3.1.0
 Werkzeug==3.0.1
 
-# Standard library (included in Python 3.14+)
+# Standard library (included in Python 3.11+)
 # No additional requirements needed
 ```
 

@@ -196,7 +196,7 @@ Email Assistant is an intelligent email management system that leverages Google 
 ### 5.1 Technology Stack
 
 **Backend:**
-- Python 3.14
+- Python 3.11+
 - Flask web framework
 - Google AI Python SDK (Gemini)
 - Google API Client Libraries (Gmail, Calendar, Tasks)

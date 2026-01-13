@@ -8,4 +8,4 @@ google-genai>=1.55.0
 # Web Framework
 Flask==3.1.0
 
-# Note: Python 3.14+ includes all standard library modules (json, sqlite3, datetime, etc.)
+# Note: Python 3.11+ includes all standard library modules (json, sqlite3, datetime, etc.)
