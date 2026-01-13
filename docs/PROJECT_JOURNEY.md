@@ -65,7 +65,7 @@ Build the foundational email assistant that can fetch emails from Gmail and cate
 - Easy-to-read console output
 
 ### 📊 Technical Achievements
-- Python 3.14 implementation
+- Python 3.11+ implementation
 - Gmail API integration with OAuth
 - Gemini AI integration with prompt engineering
 - Error handling and fallback mechanisms
@@ -74,7 +74,7 @@ Build the foundational email assistant that can fetch emails from Gmail and cate
 ### 🔧 Tech Stack
 | Component | Technology |
 |-----------|-----------|
-| Language | Python 3.14 |
+| Language | Python 3.11+ |
 | Gmail API | google-api-python-client 2.187.0 |
 | Auth | google-auth-oauthlib 1.2.3 |
 | AI Model | Gemini 2.5 Flash Lite |

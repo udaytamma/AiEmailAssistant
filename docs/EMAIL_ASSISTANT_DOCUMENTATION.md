@@ -120,7 +120,7 @@ Build an **AI-Powered Email Executive Assistant** that automatically:
 
 | Component | Technology | Version |
 |-----------|-----------|---------|
-| Language | Python | 3.14 |
+| Language | Python | 3.11+ |
 | Gmail API | `google-api-python-client` | 2.187.0 |
 | Authentication | `google-auth-oauthlib` | 1.2.3 |
 | AI Model | Gemini 2.5 Flash Lite | Latest |
@@ -186,7 +186,7 @@ emailAssistant/
 1. **Google Cloud Project** with Gmail API enabled
 2. **OAuth 2.0 Credentials** (`credentials.json`)
 3. **Gemini API Key** from [Google AI Studio](https://aistudio.google.com/app/apikey)
-4. **Python 3.14** with virtual environment
+4. **Python 3.11+** with virtual environment
 
 ### Installation Steps
 

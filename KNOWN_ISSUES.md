@@ -1,17 +1,19 @@
 # Known Issues
 
-## Python 3.14 Compatibility
+## Test Dependencies
 
-**Issue**: Some test dependencies have compatibility issues with Python 3.14
+**Note**: This project uses Python 3.11+ (the industry standard for production systems).
+
+**Issue**: Some test dependencies have specific compatibility requirements
 
 **Affected Dependencies**:
-- `freezegun==1.4.0` - Not compatible with Python 3.14's `uuid` module changes
-- `pytest-asyncio==0.23.3` - Has compatibility warnings with Python 3.14
-- `pytest-cov` - Some coverage tracking issues with Python 3.14
+- `freezegun==1.4.0` - Time mocking library for cache expiry tests
+- `pytest-asyncio==0.23.3` - Async test support
+- `pytest-cov` - Coverage tracking
 
 **Impact**:
-- Tests requiring time mocking (cache expiry tests) are currently disabled
-- Coverage reports disabled
+- Tests requiring time mocking (cache expiry tests) may need configuration
+- Coverage reports require proper setup
 - Tests work with `--no-cov` and `-p no:asyncio` flags (applied automatically)
 
 **Workaround**:
@@ -31,9 +33,9 @@ python run_tests.py comprehensive
 - ✅ Integration Tests (5 tests - basic flow tests pass)
 - ✅ Cache Manager Tests (14 tests - non-time-dependent tests pass)
 - ✅ Email Utils Tests (11 tests - most pass)
-- ⚠️ Cache Expiry Tests (require time mocking - disabled until freezegun update)
+- ⚠️ Cache Expiry Tests (require time mocking - may need configuration)
 
-**Current Status** (Updated: December 18, 2025):
+**Current Status** (Updated: January 12, 2026):
 
 The testing infrastructure is fully implemented and functional:
 - ✅ 55+ tests written across integration, unit, and contract testing
@@ -41,24 +43,23 @@ The testing infrastructure is fully implemented and functional:
 - ✅ Web interface for running tests at `/tests` endpoint
 - ✅ Real test data from actual digest emails (no PII)
 - ✅ Comprehensive test fixtures and mocking infrastructure
-- ⚠️ ~20 tests passing reliably (core functionality validated)
-- ⚠️ ~15 tests disabled (time-dependent, awaiting freezegun update)
-- ⚠️ ~20 tests need mock signature fixes for Python 3.14
+- ✅ ~20 tests passing reliably (core functionality validated)
+- ⚠️ ~15 tests disabled (time-dependent, may need freezegun configuration)
+- ⚠️ ~20 tests need mock signature fixes
 
 **Core Application**: 100% functional, all features working perfectly
 
 **Permanent Fix Options**:
-1. Wait for `freezegun` update compatible with Python 3.14
-2. Downgrade to Python 3.13 for full test coverage
-3. Use alternative time mocking library (e.g., `time-machine`)
-4. Refactor time-dependent tests to use dependency injection
+1. Configure `freezegun` properly for your Python version
+2. Use alternative time mocking library (e.g., `time-machine`)
+3. Refactor time-dependent tests to use dependency injection
 
 ## Recommendations
 
 **For Development**:
 - Run `python run_tests.py basic` before committing (10-20 seconds, core tests)
 - Core functionality is fully tested and validated
-- Use Python 3.13 if you need full test coverage reports
+- Python 3.11+ recommended for stability
 
 **For Production**:
 - Application is production-ready

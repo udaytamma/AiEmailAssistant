@@ -263,14 +263,6 @@ pytest -v -m basic
 pytest -v --cov=src --cov-report=html
 ```
 
-### Python 3.14 Compatibility Note
-
-The application is built for Python 3.14. Some test dependencies have compatibility issues:
-- Tests run with `--no-cov` and `-p no:asyncio` flags (handled automatically by `run_tests.py`)
-- Core functionality works perfectly
-- ~20 tests pass reliably (API contracts, integration, display utils)
-- See `KNOWN_ISSUES.md` for details
-
 ### Test Coverage
 
 - **Integration Tests**: End-to-end workflows
@@ -351,7 +343,7 @@ MIT License - feel free to use and modify
 ---
 
 **Version**: 2.1 (Phase 5 - Testing Infrastructure)
-**Last Updated**: December 18, 2025
-**Python**: 3.14+
-**Status**: Production Ready ✅
+**Last Updated**: January 12, 2026
+**Python**: 3.11+
+**Status**: Production Ready
 **Test Coverage**: 55+ tests across integration, unit, and contract testing

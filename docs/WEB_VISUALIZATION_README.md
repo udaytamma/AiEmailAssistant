@@ -266,5 +266,5 @@ Potential improvements:
 ---
 
 **Version**: 1.0
-**Last Updated**: December 17, 2025
-**Requires**: Flask, Python 3.14+, Virtual environment
+**Last Updated**: January 12, 2026
+**Requires**: Flask, Python 3.11+, Virtual environment
