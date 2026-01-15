@@ -188,10 +188,11 @@ def run_email_assistant():
         api_key = env.get('GOOGLE_API_KEY')
 
         if not api_key:
-            # Try fallback key
-            api_key = 'REDACTED_GEMINI_API_KEY'
-            env['GOOGLE_API_KEY'] = api_key
-            logger.warning("Using fallback API key")
+            logger.error("GOOGLE_API_KEY environment variable is not set")
+            return jsonify({
+                'status': 'error',
+                'message': 'GOOGLE_API_KEY environment variable is not set. Please set it before running the assistant.'
+            }), 500
 
         # Run the script using the virtual environment's Python
         venv_python = Path(__file__).parent.parent.parent / '.venv' / 'bin' / 'python'
@@ -666,8 +667,11 @@ def get_gemini_review():
         # Get API key
         api_key = os.environ.get('GOOGLE_API_KEY')
         if not api_key:
-            api_key = 'REDACTED_GEMINI_API_KEY'  # Fallback
-            os.environ['GOOGLE_API_KEY'] = api_key
+            logger.error("GOOGLE_API_KEY environment variable is not set")
+            return jsonify({
+                'status': 'error',
+                'message': 'GOOGLE_API_KEY environment variable is not set. Please set it before using Gemini features.'
+            }), 500
 
         # Connect to Gmail
         logger.info("Connecting to Gmail")

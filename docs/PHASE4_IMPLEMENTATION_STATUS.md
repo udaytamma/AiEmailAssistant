@@ -548,8 +548,8 @@ cd "$(dirname "$0")/.."
 # Activate virtual environment
 source .venv/bin/activate
 
-# Set API key
-export GOOGLE_API_KEY='REDACTED_GEMINI_API_KEY'
+# Set API key (get yours from https://aistudio.google.com/app/apikey)
+export GOOGLE_API_KEY='your_api_key_here'
 
 # Start Flask server
 python src/web/server.py
