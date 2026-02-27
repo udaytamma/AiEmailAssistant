@@ -28,6 +28,35 @@ class InvalidResponseError(Exception):
     pass
 
 
+def _safe_extract_text(response) -> str:
+    """Safely extract text from a Gemini API response.
+
+    The response.text property can raise ValueError when the response
+    contains no text parts (e.g., multipart response with only tool calls).
+
+    Args:
+        response: Gemini GenerateContentResponse object.
+
+    Returns:
+        Extracted text string, or empty string on failure.
+    """
+    try:
+        text = response.text
+        return text if text else ""
+    except (ValueError, AttributeError) as e:
+        logger.warning(f"Could not extract text from Gemini response: {e}")
+        # Fallback: try to extract text from response parts directly
+        try:
+            parts = []
+            for candidate in response.candidates:
+                for part in candidate.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        parts.append(part.text)
+            return "\n".join(parts)
+        except Exception:
+            return ""
+
+
 def categorize_email_with_gemini(email_dict: Dict[str, str], client: Any, model_name: str) -> Dict[str, Any]:
     """
     Categorize a single email using Gemini AI.
@@ -101,7 +130,9 @@ Only return the JSON object, nothing else."""
             metrics.record_error(__name__, type(e).__name__, error_msg, traceback.format_exc())
             raise GeminiAPIError(error_msg)
 
-        response_text = response.text.strip()
+        response_text = _safe_extract_text(response).strip()
+        if not response_text:
+            raise GeminiAPIError("Empty response from Gemini (no text content)")
 
         # Clean markdown code blocks from response
         if response_text.startswith('```json'):
@@ -184,7 +215,7 @@ def categorize_emails(
         email_list: List of email dictionaries from fetch_recent_emails()
         client: Initialized Gemini client instance (google.genai.Client)
         model_name: Name of the Gemini model to use
-        requests_per_minute: API rate limit (default: 30 for gemini-2.5-flash-lite)
+        requests_per_minute: API rate limit (default: 30 for gemini-3-flash-preview)
 
     Returns:
         list: Categorized emails with added fields (category, subcategory, etc.)
@@ -353,7 +384,9 @@ Only return the JSON object, nothing else."""
             metrics.record_error(__name__, type(e).__name__, error_msg)
             raise GeminiAPIError(error_msg)
 
-        response_text = response.text.strip()
+        response_text = _safe_extract_text(response).strip()
+        if not response_text:
+            raise GeminiAPIError("Empty response from Gemini (no text content)")
 
         # Clean markdown code blocks
         if response_text.startswith('```json'):
@@ -503,7 +536,9 @@ Only return the JSON object, nothing else."""
             metrics.record_error(__name__, type(e).__name__, error_msg)
             raise GeminiAPIError(error_msg)
 
-        response_text = response.text.strip()
+        response_text = _safe_extract_text(response).strip()
+        if not response_text:
+            raise GeminiAPIError("Empty response from Gemini (no text content)")
 
         # Clean markdown code blocks
         if response_text.startswith('```json'):
